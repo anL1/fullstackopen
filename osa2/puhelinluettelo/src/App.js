@@ -5,10 +5,15 @@ class App extends React.Component {
         super(props)
         this.state = {
             persons: [
-                { name: 'Arto Hellas', number: '123123' }
+                { name: 'Arto Hellas', number: '040-123456' },
+                { name: 'Martti Tienari', number: '040-123456' },
+                { name: 'Arto Järvinen', number: '040-123456' },
+                { name: 'Lea Kutvonen', number: '040-123456' }
             ],
             newName: '',
-            newNumber: ''
+            newNumber: '',
+            filter: '',
+            showAll: true
         }
     }
 
@@ -39,27 +44,64 @@ class App extends React.Component {
         this.setState({ newNumber: event.target.value })
     }
 
+    handleFilter = (event) => {
+        let query = event.target.value
+        if (query === '') {
+            this.setState({ filter: query, showAll: true })
+        }
+        if (query !== '') {
+            this.setState({ filter: query, showAll: false })
+        }
+    }
+
     render() {
+        const contactsToShow =
+            this.state.showAll ?
+                this.state.persons :
+                this.state.persons.filter(person => person.name.toLowerCase().includes(this.state.filter.toLowerCase()))
+
         return (
             <div>
                 <h2>Puhelinluettelo</h2>
-                <form>
-                    <div>
-                        nimi: <input value={this.state.newName} onChange={this.handleNameChange} />
-                    </div>
-                    <div>
-                        numero: <input value={this.state.newNumber} onChange={this.handleNumberChange} />
-                    </div>
-                    <div>
-                        <button type="submit" onClick={this.addContact} >lisää</button>
-                    </div>
-                </form>
-                <h2>Numerot</h2>
-                {this.state.persons.map(person => <Contact key={person.name} person={person} />)}
+                <Filter filter={this.state.filter} handleFilter={this.handleFilter} />
+                <Form newName={this.state.newName} handleName={this.handleNameChange}
+                    newNumber={this.state.newNumber} handleNumber={this.handleNumberChange}
+                    addContact={this.addContact} />
+                <Contacts list={contactsToShow} />
             </div>
         )
     }
 }
+
+const Form = (props) => (
+    <div>
+        <h2>Lisää uusi</h2>
+        <form>
+            <div>
+                nimi: <input value={props.newName} onChange={props.handleName} />
+            </div>
+            <div>
+                numero: <input value={props.newNumber} onChange={props.handleNumber} />
+            </div>
+            <div>
+                <button type="submit" onClick={props.addContact} >lisää</button>
+            </div>
+        </form>
+    </div>
+)
+
+const Filter = (props) => (
+    <div>
+        rajaa näytettäviä: <input value={props.filter} onChange={props.handleFilter} />
+    </div>
+)
+
+const Contacts = ({ list }) => (
+    <div>
+        <h2>Numerot</h2>
+        {list.map(person => <Contact key={person.name} person={person} />)}
+    </div>
+)
 
 const Contact = ({ person }) => (
     <div>
