@@ -1,5 +1,7 @@
 import React from 'react';
-import axios from 'axios'
+import Contact from './components/Contact'
+import Form from './components/Form'
+import personService from './services/persons'
 
 class App extends React.Component {
     constructor(props) {
@@ -9,35 +11,82 @@ class App extends React.Component {
             newName: '',
             newNumber: '',
             filter: '',
-            showAll: true
+            showAll: true,
+            notification: null,
+            error: null
         }
     }
 
     componentDidMount() {
-        axios
-            .get('http://localhost:3001/persons')
-            .then(response => {
-                this.setState({ persons: response.data })
+        personService
+            .getAll()
+            .then(persons => {
+                this.setState({ persons })
             })
     }
 
     addContact = (event) => {
         event.preventDefault()
         const names = this.state.persons.map(p => p.name)
-        if (names.includes(this.state.newName)) {
-            alert('Contact already exists')
-            this.setState({ newName: '' })
-            return
-        }
-
         const newPerson = {
             name: this.state.newName,
             number: this.state.newNumber
         }
 
-        const persons = this.state.persons.concat(newPerson)
+        if (names.includes(this.state.newName)) {
+            if (window.confirm(`${this.state.newName} on jo luettelossa, korvataanko vanha numero uudella?`)) {
+                const id = this.state.persons.find(p => p.name === this.state.newName).id
+                personService
+                    .update(id, newPerson)
+                    .then(newPerson => {
+                        const refreshedList = this.state.persons.map(p => p.id !== id ? p : newPerson)
+                        this.setState({
+                            persons: refreshedList,
+                            newName: '',
+                            newNumber: '',
+                            notification: `Päivitettiin yhteystietoa ${newPerson.name}`
+                        })
+                    })
+                    .catch(error => {
+                        this.setState({ error: `Yhteystieto ${newPerson.name} on jo valitettavasti poistettu palvelimelta` })
+                    })
+                setTimeout(() => {
+                    this.setState({ notification: null, error: null })
+                }, 5000);
+            }
+            return
+        }
 
-        this.setState({ persons, newName: '', newNumber: '' })
+        personService
+            .create(newPerson)
+            .then(response => this.setState({
+                persons: this.state.persons.concat(response),
+                newName: '',
+                newNumber: '',
+                notification: `Lisättiin ${newPerson.name}`
+            })
+            )
+        setTimeout(() => {
+            this.setState({ notification: null })
+        }, 5000);
+    }
+
+    deleteContact = (id) => {
+        return () => {
+            const name = this.state.persons.find(p => p.id === id).name
+            if (window.confirm(`Poistetaanko ${name}?`)) {
+                personService
+                    .remove(id)
+                    .then(response => {
+                        const refreshedList = this.state.persons.filter(n => n.id !== id)
+                        this.setState({ persons: refreshedList, notification: `Poistettiin ${name}` })
+                    })
+                setTimeout(() => {
+                    this.setState({ notification: null })
+                }, 5000);
+            }
+        }
+
     }
 
     handleNameChange = (event) => {
@@ -67,32 +116,20 @@ class App extends React.Component {
         return (
             <div>
                 <h2>Puhelinluettelo</h2>
+                <Notification message={this.state.notification} />
+                <Error message={this.state.error} />
                 <Filter filter={this.state.filter} handleFilter={this.handleFilter} />
                 <Form newName={this.state.newName} handleName={this.handleNameChange}
                     newNumber={this.state.newNumber} handleNumber={this.handleNumberChange}
                     addContact={this.addContact} />
-                <Contacts list={contactsToShow} />
+                <div>
+                    <h2>Numerot</h2>
+                    {contactsToShow.map(person => <Contact key={person.id} person={person} remove={this.deleteContact(person.id)} />)}
+                </div>
             </div>
         )
     }
 }
-
-const Form = (props) => (
-    <div>
-        <h2>Lisää uusi</h2>
-        <form>
-            <div>
-                nimi: <input value={props.newName} onChange={props.handleName} />
-            </div>
-            <div>
-                numero: <input value={props.newNumber} onChange={props.handleNumber} />
-            </div>
-            <div>
-                <button type="submit" onClick={props.addContact} >lisää</button>
-            </div>
-        </form>
-    </div>
-)
 
 const Filter = (props) => (
     <div>
@@ -100,18 +137,26 @@ const Filter = (props) => (
     </div>
 )
 
-const Contacts = ({ list }) => (
-    <div>
-        <h2>Numerot</h2>
-        {list.map(person => <Contact key={person.name} person={person} />)}
-    </div>
-)
+const Notification = ({ message }) => {
+    if (message === null) {
+        return null
+    }
+    return (
+        <div className="notification" >
+            {message}
+        </div>
+    )
+}
 
-const Contact = ({ person }) => (
-    <div>
-        {person.name} {person.number}
-    </div>
-)
-
+const Error = ({ message }) => {
+    if (message === null) {
+        return null
+    }
+    return (
+        <div className="error" >
+            {message}
+        </div>
+    )
+}
 
 export default App

@@ -49,13 +49,22 @@ const Listing = ({ matches }) => {
         )
     } else if (matches.length === 1) {
         return (
-            <div>{matches.map(c => <Country key={c.name} name={c.name} capital={c.capital} population={c.population} flag={c.flag} />)}</div>
+            <CreateCountryPage matches={matches} />
         )
     } else {
+        const names = matches.map(c => c.name)
         return (
-            <ul>{matches.map(c => <li key={c.name} >{c.name}</li>)}</ul>
+            <div>
+                {names.map(name => <div key={name} >{name}</div>)}
+            </div>
         )
     }
+}
+
+const CreateCountryPage = ({ matches }) => {
+    return (
+        <div>{matches.map(c => <Country key={c.name} name={c.name} capital={c.capital} population={c.population} flag={c.flag} />)}</div>
+    )
 }
 
 const Country = (props) => {
