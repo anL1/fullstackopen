@@ -2,73 +2,106 @@ const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/Blog')
+const { initialBlogs, format, blogsInDb } = require('./test_helper')
 
-const initialBlogs = [
-    {
-        title: "new-blog-title",
-        author: "blog-author-1",
-        url: "url_1",
-        likes: 15
-    },
-    {
-        title: "new-blog-title2",
-        author: "blog-author-2",
-        url: "url_2",
-        likes: 5
-    }
-]
+describe('when there is initially blogs saved in db', async () => {
+    beforeAll(async () => {
+        await Blog.remove({})
 
-beforeAll(async () => {
-    await Blog.remove({})
+        const blogObjects = initialBlogs.map(b => new Blog(b))
+        await Promise.all(blogObjects.map(b => b.save()))
+    })
 
-    let blogObject = new Blog(initialBlogs[0])
-    await blogObject.save()
+    test('blogs are returned by GET /api/blogs', async () => {
+        const blogs = await blogsInDb()
 
-    blogObject = new Blog(initialBlogs[1])
-    await blogObject.save()
-})
+        const response = await api
+            .get('/api/blogs')
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
 
-test('blogs are returned', async () => {
-    await api
-        .get('/api/blogs')
-        .expect(200)
-        .expect('Content-Type', /application\/json/)
-})
+        expect(response.body.length).toBe(blogs.length)
+        const returnedBlogs = response.body.map(b => b.title)
+        blogs.forEach(blog => {
+            expect(returnedBlogs).toContainEqual(blog.title)
+        })
+    })
 
-test('blog is posted successfully', async () => {
-    await api
-        .post('/api/blogs')
-        .send(initialBlogs[0])
-        .expect(201)
-        .expect('Content-Type', /application\/json/)
-})
+    test('blog is saved successfully by POST /api/blogs', async () => {
+        const blogsBefore = await blogsInDb()
 
-test('blog without title or url is rejected with error 400', async () => {
-    const blog = {
-        author: "author",
-        likes: 10
-    }
+        await api
+            .post('/api/blogs')
+            .send(initialBlogs[0])
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
 
-    await api
-        .post('/api/blogs')
-        .send(blog)
-        .expect(400)
-})
+        const blogsAfter = await blogsInDb()
 
-test('if blog has no likes, then likes are set to 0', async () => {
-    const blog = {
-        title: "interesting title",
-        author: "hello author",
-        url: "hello there.url.com"
-    }
+        expect(blogsAfter.length).toBe(blogsBefore.length + 1)
+        expect(blogsAfter.map(format)).toContainEqual(initialBlogs[0])
+    })
 
-    const response = await api
-        .post('/api/blogs')
-        .send(blog)
+    test('blog without title or url is rejected with status 400 error', async () => {
+        const blog = {
+            author: "author",
+            likes: 10
+        }
 
-    expect(response.body.likes).toBe(0)
-})
+        const blogsBefore = await blogsInDb()
 
-afterAll(() => {
-    server.close()
+        await api
+            .post('/api/blogs')
+            .send(blog)
+            .expect(400)
+
+        const blogsAfter = await blogsInDb()
+
+        expect(blogsAfter.length).toBe(blogsBefore.length)
+    })
+
+    test('if blog has no likes, then likes are set to 0', async () => {
+        const blog = {
+            title: "interesting title",
+            author: "hello author",
+            url: "hello there.url.com"
+        }
+
+        const response = await api
+            .post('/api/blogs')
+            .send(blog)
+
+        expect(response.body.likes).toBe(0)
+    })
+
+    describe('deleting a note', async () => {
+        let newBlog
+
+        beforeAll(async () => {
+            newBlog = new Blog({
+                title: "will be deleted",
+                author: "hello there",
+                url: "url_1",
+                likes: 10
+            })
+            await newBlog.save()
+        })
+
+        test('blog is deleted succesfully by DELETE /api/blogs/:id', async () => {
+            const blogsBefore = await blogsInDb()
+
+            await api
+                .delete(`/api/blogs/${newBlog._id}`)
+                .expect(204)
+
+            const blogsAfter = await blogsInDb()
+            const returnedBlogs = blogsAfter.map(format)
+            expect(returnedBlogs).not.toContainEqual(newBlog)
+            expect(blogsAfter.length).toBe(blogsBefore.length - 1)
+        })
+    })
+
+    afterAll(() => {
+        server.close()
+    })
 })
