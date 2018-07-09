@@ -1,54 +1,56 @@
 const listHelper = require('../utils/list_helper')
 
-test('dummy is called', () => {
-    const blogs = []
+//describe.skip('list helpers', () => {
+    test('dummy is called', () => {
+        const blogs = []
 
-    const result = listHelper.dummy(blogs)
-    expect(result).toBe(1)
-})
-
-describe('total likes', () => {
-
-    test('of empty list is zero', () => {
-        const bloglist = []
-        const result = listHelper.totalLikes(bloglist)
-        expect(result).toBe(0)
+        const result = listHelper.dummy(blogs)
+        expect(result).toBe(1)
     })
 
-    test('of a list with one object is correct', () => {
-        const listWithOneBlog = [
-            {
-                _id: '5a422aa71b54a676234d17f8',
-                title: 'Go To Statement Considered Harmful',
-                author: 'Edsger W. Dijkstra',
-                url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
-                likes: 5,
-                __v: 0
-            }
-        ]
-        expect(listHelper.totalLikes(listWithOneBlog)).toBe(5)
+    describe('total likes', () => {
+
+        test('of empty list is zero', () => {
+            const bloglist = []
+            const result = listHelper.totalLikes(bloglist)
+            expect(result).toBe(0)
+        })
+
+        test('of a list with one object is correct', () => {
+            const listWithOneBlog = [
+                {
+                    _id: '5a422aa71b54a676234d17f8',
+                    title: 'Go To Statement Considered Harmful',
+                    author: 'Edsger W. Dijkstra',
+                    url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
+                    likes: 5,
+                    __v: 0
+                }
+            ]
+            expect(listHelper.totalLikes(listWithOneBlog)).toBe(5)
+        })
+
+        test('of a list with several objects is correct', () => {
+            expect(listHelper.totalLikes(blogs)).toBe(36)
+        })
     })
 
-    test('of a list with several objects is correct', () => {
-        expect(listHelper.totalLikes(blogs)).toBe(36)
-    })
-})
+    describe('favorite blog', () => {
 
-describe('favorite blog', () => {
-
-    test('of a list with several blogs is computed correctly', () => {
-        expect(listHelper.favoriteBlog(blogs)).toEqual(
-            {
-                _id: "5a422b3a1b54a676234d17f9",
-                title: "Canonical string reduction",
-                author: "Edsger W. Dijkstra",
-                url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-                likes: 12,
-                __v: 0
-            }
-        )
+        test('of a list with several blogs is computed correctly', () => {
+            expect(listHelper.favoriteBlog(blogs)).toEqual(
+                {
+                    _id: "5a422b3a1b54a676234d17f9",
+                    title: "Canonical string reduction",
+                    author: "Edsger W. Dijkstra",
+                    url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
+                    likes: 12,
+                    __v: 0
+                }
+            )
+        })
     })
-})
+//})
 
 const blogs = [
     {
