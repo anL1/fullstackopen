@@ -2,7 +2,105 @@ const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/Blog')
-const { initialBlogs, format, blogsInDb } = require('./test_helper')
+const User = require('../models/User')
+const { initialBlogs, format, blogsInDb, usersInDb } = require('./test_helper')
+
+describe('when there is initially users saved in db', async () => {
+    beforeAll(async () => {
+        await User.remove({})
+
+        const user = new User({
+            username: 'Testikayttaja',
+            name: 'Teppo Testaaja',
+            password: 'secret',
+            adult: true
+        })
+
+        await user.save()
+    })
+
+    test('POST /api/users succeeds with a fresh username', async () => {
+        const usersBefore = await usersInDb()
+
+        const newUser = {
+            username: 'user123',
+            name: 'D. Duck',
+            password: 'hash123',
+            adult: false
+        }
+
+        await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAfter = await usersInDb()
+        expect(usersAfter.length).toBe(usersBefore.length + 1)
+        const usernames = usersAfter.map(u => u.username)
+        expect(usernames).toContain(newUser.username)
+    })
+
+    test('POST /api/users fails with proper statuscode if username already exists', async () => {
+        const usersBefore = await usersInDb()
+
+        const newUser = {
+            username: 'Testikayttaja',
+            name: 'Teppo Testaaja',
+            password: 'secret',
+            adult: true
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        expect(result.body).toEqual({ error: 'username must be unique' })
+
+        const usersAfter = await usersInDb()
+        expect(usersAfter.length).toBe(usersBefore.length)
+    })
+
+    test('POST /api/users fails with proper statuscode if password is less than 3 digits long', async () => {
+        const usersBefore = await usersInDb()
+
+        const newUser = {
+            username: 'tester',
+            name: 'Teppo Testaaja',
+            password: '12',
+            adult: true
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        expect(result.body).toEqual({ error: 'password must be at least 3 characters' })
+
+        const usersAfter = await usersInDb()
+        expect(usersAfter.length).toBe(usersBefore.length)
+    })
+
+    test('if adult is undefined it will be set to true', async () => {
+        const newUser = {
+            username: 'user789',
+            name: 'T. Testaaja',
+            password: 'secret',
+        }
+
+        const response = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        expect(response.body.adult).toBe(true)
+    })
+})
 
 describe('when there is initially blogs saved in db', async () => {
     beforeAll(async () => {
