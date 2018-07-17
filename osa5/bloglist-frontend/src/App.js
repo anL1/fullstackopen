@@ -7,6 +7,7 @@ import Message from './components/message'
 import Error from './components/Error'
 import LoginForm from './components/LoginForm';
 import Togglable from './components/Togglable'
+import BlogToggle from './components/BlogToggle'
 
 class App extends React.Component {
   constructor(props) {
@@ -126,7 +127,9 @@ class App extends React.Component {
         <div>
           <h2>blogs</h2>
           {this.state.blogs.map(blog =>
-            <Blog key={blog._id} blog={blog} />
+            <BlogToggle Label={`${blog.title} ${blog.author}`} key={blog._id} >
+              <Blog blog={blog} />
+            </BlogToggle>
           )}
         </div>
       </div>
