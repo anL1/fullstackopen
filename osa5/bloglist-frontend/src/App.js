@@ -97,6 +97,21 @@ class App extends React.Component {
     }
   }
 
+  likeBlog = (id) => {
+    return async () => {
+      try {
+        const blog = this.state.blogs.find(n => n._id === id)
+        const updatedBlog = { ...blog, user: blog.user, likes: blog.likes + 1 }
+
+        await blogService.update(id, updatedBlog)
+        
+        this.setState({ blogs: this.state.blogs.map(blog => blog._id !== id ? blog : updatedBlog) })
+      } catch (exception) {
+        console.log(exception)
+      }
+    }
+  }
+
   render() {
     if (this.state.user === null) {
       return (
@@ -128,7 +143,7 @@ class App extends React.Component {
           <h2>blogs</h2>
           {this.state.blogs.map(blog =>
             <BlogToggle Label={`${blog.title} ${blog.author}`} key={blog._id} >
-              <Blog blog={blog} />
+              <Blog blog={blog} like={this.likeBlog} />
             </BlogToggle>
           )}
         </div>

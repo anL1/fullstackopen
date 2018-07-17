@@ -9,13 +9,13 @@ const blogStyle = {
   background: 'lightblue'
 }
 
-const Blog = ({ blog }) => (
+const Blog = ({ blog, like }) => (
   <div style={blogStyle}>
     <div>
       <p>{blog.url}</p>
     </div>
     <div>
-      {blog.likes} <button>like</button>
+      {blog.likes} <button onClick={like(blog._id)}>like</button>
     </div>
     <div>
       <p>added by: {blog.user.name}</p>
