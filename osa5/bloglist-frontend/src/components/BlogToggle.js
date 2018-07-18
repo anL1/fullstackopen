@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 class BlogToggle extends React.Component {
     constructor(props){
@@ -26,6 +27,10 @@ class BlogToggle extends React.Component {
             </div>
         )
     }
+}
+
+BlogToggle.propTypes = {
+    Label: PropTypes.string.isRequired
 }
 
 const blogStyle = {

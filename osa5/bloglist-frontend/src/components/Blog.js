@@ -9,7 +9,7 @@ const blogStyle = {
   background: 'lightblue'
 }
 
-const Blog = ({ blog, like }) => (
+const Blog = ({ blog, like, remove }) => (
   <div style={blogStyle}>
     <div>
       <p>{blog.url}</p>
@@ -19,6 +19,9 @@ const Blog = ({ blog, like }) => (
     </div>
     <div>
       <p>added by: {blog.user.name}</p>
+    </div>
+    <div>
+      <button onClick={remove(blog._id)}>delete</button>
     </div>
   </div>
 )

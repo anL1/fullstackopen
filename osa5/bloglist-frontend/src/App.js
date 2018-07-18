@@ -97,6 +97,20 @@ class App extends React.Component {
     }
   }
 
+  deleteBlog = (id) => {
+    return async () => {
+      try {
+        const blog = this.state.blogs.find(b => b._id === id)
+        if(window.confirm(`Delete ${blog.title} by ${blog.author}?`))
+        await blogService.remove(id)
+
+        this.setState({ blogs: this.state.blogs.filter(b => b._id !== id) })
+      } catch (exception) {
+        console.log(exception)
+      }
+    }
+  }
+
   likeBlog = (id) => {
     return async () => {
       try {
@@ -150,7 +164,7 @@ class App extends React.Component {
           <h2>blogs</h2>
           {blogsInOrder.map(blog =>
             <BlogToggle Label={`${blog.title} ${blog.author}`} key={blog._id} >
-              <Blog blog={blog} like={this.likeBlog} />
+              <Blog blog={blog} like={this.likeBlog} remove={this.deleteBlog} />
             </BlogToggle>
           )}
         </div>
